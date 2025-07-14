@@ -1,92 +1,75 @@
-//importing langchain openai, since together is openai compatible, openai_api_key is the togeth.ai api key 
+//importing langchain openai, since together is openai compatible, openai_api_key is the togeth.ai api key
+// https://www.youtube.com/live/kEtGm75uBes?si=NcRwZnpvno4c6lGU&t=4455
 import { ChatOpenAI } from "@langchain/openai";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
-import { Document } from "@langchain/core/documents";
-import { OpenAIEmbeddings } from "@langchain/openai";
-import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
+import { MemorySaver } from "@langchain/langgraph";
 
 import data from "./data.js";
 
-
-import dotenv from "dotenv";
-
-// Load environment variables
-dotenv.config();
+import { vectorStore, addDocumentsToVectorStore } from "./embeddings.js";
 
 //**step 1 indexing**: load, split, embed, store
-const video1 = data[0]
-
-const docs = [new Document({pageContent: video1.content, metadata: {source: video1.source}})];
-
-// split the video into chunks
-const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 500,
-    chunkOverlap: 100,
-});
-const chunks = await splitter.splitDocuments(docs);
-// console.log(chunks);
-
-//**step 2 embedding **
-const embeddings = new OpenAIEmbeddings({
-    model: "BAAI/bge-base-en-v1.5",
-    openAIApiKey: process.env.TOGETHER_API_KEY,
-    configuration: {
-        baseURL: "https://api.together.xyz/v1",
-    },
-});
-
-const vectorStore = new MemoryVectorStore(embeddings);
-
-await vectorStore.addDocuments(chunks);
-
-// retrieve the most relevant chunks
-const retrievedDocs = await vectorStore.similaritySearch("Who is known as the goat of the unimaginable?", 2);
-
-//console.log(retrievedDocs);
-
+const video1 = data[0];
+await addDocumentsToVectorStore(video1);
 
 //retrieval tool
-const retrieveTool = tool(async({query}) => {
-    console.log("retrieving docs for query:", query);
-    const retrievedDocs = await vectorStore.similaritySearch(query, 3);
-    console.log("Retrieved documents:", retrievedDocs);
-    
-    const serializedDocs = retrievedDocs.map(doc => doc.pageContent).join("\n\n");
-    console.log("Serialized documents:", serializedDocs);
+const retrieveTool = tool(
+  async ({ query }, { configurable: { id } }) => {
+    //(doc) => doc.metadata.id === id is a filter function to only retrieve the documents with the same id -> only works for memory vectore store, would be different for other databases
+    const retrievedDocs = await vectorStore.similaritySearch(
+      query,
+      3,
+      (doc) => doc.metadata.id === id
+    );
+
+    const serializedDocs = retrievedDocs
+      .map((doc) => doc.pageContent)
+      .join("\n\n");
+
     return serializedDocs;
-},
-{
+  },
+  {
     name: "retrieve",
     description: "Retrieve the most relevant chunks from the content",
     schema: z.object({
-        query: z.string(),
+      query: z.string(),
     }),
-}
+  }
 );
 
-
 const llm = new ChatOpenAI({
-    model: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
-    openAIApiKey: process.env.TOGETHER_API_KEY,
-    configuration: {
-        baseURL: "https://api.together.xyz/v1",
-    },
+  model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+  openAIApiKey: process.env.TOGETHER_API_KEY,
+  configuration: {
+    baseURL: "https://api.together.xyz/v1",
+  },
 });
+
+const checkpointer = new MemorySaver();
 
 const agent = createReactAgent({
-    llm,
-    tools: [retrieveTool],
+  llm,
+  tools: [retrieveTool],
+  checkpointer,
 });
 
+//testing the agent
+const id = 1; //id of the first data json in data.js
 
-const results = await agent.invoke({messages:[{role: "user", content: "Based on the documents provided, Who is known as the goat of the unimaginable and why?"}],    
-}
+console.log("Q1: Who is known as the goat of the unimaginable?");
+const results = await agent.invoke(
+  {
+    messages: [
+      {
+        role: "user",
+        content:
+          "Based on the documents provided, Who is known as the goat of the unimaginable?",
+      },
+    ],
+  },
+  { configurable: { thread_id: 1, id } }
 );
 
 console.log(results.messages.at(-1)?.content);
-
-
-
