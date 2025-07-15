@@ -1,18 +1,46 @@
 //importing langchain openai, since together is openai compatible, openai_api_key is the togeth.ai api key
 // https://www.youtube.com/live/kEtGm75uBes?si=NcRwZnpvno4c6lGU&t=4455
+// node --env-file=.env agent.js
 import { ChatOpenAI } from "@langchain/openai";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { MemorySaver } from "@langchain/langgraph";
+import { MongoClient, ServerApiVersion } from 'mongodb';
 
 import data from "./data.js";
 
 import { vectorStore, addDocumentsToVectorStore } from "./embeddings.js";
 
+// MongoDB connection setup
+const uri = "mongodb+srv://aslabij:aQp1u3AdC4tCiyy2@cluster0.0901rov.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+});
+
+async function testMongoConnection() {
+  try {
+    await client.connect();
+    await client.db("admin").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+  } catch (error) {
+    console.error("MongoDB connection failed:", error);
+  } finally {
+    await client.close();
+  }
+}
+
+// Test MongoDB connection
+await testMongoConnection();
+
 //**step 1 indexing**: load, split, embed, store
 const video1 = data[0];
-await addDocumentsToVectorStore(video1);
+await addDocumentsToVectorStore(data[0]);
+await addDocumentsToVectorStore(data[1]);
 
 //retrieval tool
 const retrieveTool = tool(
