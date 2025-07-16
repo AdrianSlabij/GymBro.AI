@@ -15,6 +15,7 @@
     "@langchain/community": "^0.3.48",
     "@langchain/core": "^0.3.62",
     "@langchain/langgraph": "^0.3.7",
+    "@langchain/mongodb": "^0.1.0",
     "@langchain/openai": "^0.5.18",
     "dotenv": "^16.4.5",
     "langchain": "^0.3.29",

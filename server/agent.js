@@ -10,10 +10,10 @@ import { MongoClient, ServerApiVersion } from 'mongodb';
 
 import data from "./data.js";
 
-import { vectorStore, addDocumentsToVectorStore } from "./embeddings.js";
+import { vectorStore, addBookToVectorStore } from "./embeddings.js";
 
 // MongoDB connection setup
-const uri = "mongodb+srv://aslabij:aQp1u3AdC4tCiyy2@cluster0.0901rov.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -39,24 +39,30 @@ await testMongoConnection();
 
 //**step 1 indexing**: load, split, embed, store
 const video1 = data[0];
-await addDocumentsToVectorStore(data[0]);
-await addDocumentsToVectorStore(data[1]);
+await addBookToVectorStore(data[0]);
+await addBookToVectorStore(data[1]);
 
 //retrieval tool
 const retrieveTool = tool(
-  async ({ query }, { configurable: { id } }) => {
+  
+  async ({ query }, { configurable: { id } }) => {console.log("Retrieval tool initialized")
     //(doc) => doc.metadata.id === id is a filter function to only retrieve the documents with the same id -> only works for memory vectore store, would be different for other databases
-    const retrievedDocs = await vectorStore.similaritySearch(
+    try{const retrievedDocs = await vectorStore.similaritySearch(
       query,
       3,
-      (doc) => doc.metadata.id === id
+      {id}
     );
+    console.log("Retrieved docs:", retrievedDocs);
 
     const serializedDocs = retrievedDocs
       .map((doc) => doc.pageContent)
       .join("\n\n");
-
+    console.log(serializedDocs);
     return serializedDocs;
+  } catch (error) {
+    console.error("Error in retrieval tool:", error);
+    return "Error in retrieval tool";
+  }
   },
   {
     name: "retrieve",
