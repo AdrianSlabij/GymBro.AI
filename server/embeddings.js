@@ -1,21 +1,20 @@
-import { OpenAIEmbeddings } from "@langchain/openai";
+
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { Document } from "@langchain/core/documents";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
-
+import { TogetherAIEmbeddings } from "@langchain/community/embeddings/togetherai";
 import { MongoDBAtlasVectorSearch } from "@langchain/mongodb"
 import { MongoClient } from "mongodb";
 // import dotenv from "dotenv";
 // dotenv.config();
 
 
-const embeddings = new OpenAIEmbeddings({
+const embeddings = new TogetherAIEmbeddings({
   model: "BAAI/bge-base-en-v1.5",
-  openAIApiKey: process.env.TOGETHER_API_KEY,
-  configuration: {
-    baseURL: "https://api.together.xyz/v1",
-  },
+  apiKey: process.env.TOGETHER_API_KEY, 
 });
+
+
 
 const client = new MongoClient(process.env.MONGODB_URI || "");
 const collection = client
@@ -48,8 +47,8 @@ export const addBookToVectorStore = async (documentData) => {
   await vectorStore.addDocuments(chunks);
 
   const [embedding] = await embeddings.embedDocuments([content]);
-// console.log("Generated embedding:", embedding);
-// console.log("Embedding length:", embedding.length);
+console.log("Generated embedding:", embedding);
+ console.log("Embedding length:", embedding.length);
 };
 
 

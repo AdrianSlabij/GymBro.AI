@@ -45,12 +45,11 @@ await addBookToVectorStore(data[1]);
 //retrieval tool
 const retrieveTool = tool(
   
-  async ({ query }, { configurable: { id } }) => {console.log("Retrieval tool initialized")
+  async ({ query }) => {console.log("Retrieval tool initialized")
     //(doc) => doc.metadata.id === id is a filter function to only retrieve the documents with the same id -> only works for memory vectore store, would be different for other databases
     try{const retrievedDocs = await vectorStore.similaritySearch(
       query,
-      3,
-      {id}
+      3
     );
     console.log("Retrieved docs:", retrievedDocs);
 
@@ -103,7 +102,7 @@ const results = await agent.invoke(
       },
     ],
   },
-  { configurable: { thread_id: 1, id } }
+  { configurable: { thread_id: 1} }
 );
 
 console.log(results.messages.at(-1)?.content);
