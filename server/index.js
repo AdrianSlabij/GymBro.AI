@@ -22,6 +22,7 @@ app.post("/generate", async (req, res) => {
 const results = await agent.invoke(
   {
     messages: [
+      {role: "system", content: "Do not say it seems like there is extra information in the response. Just answer the question."},
       {
         role: "user",
         content:
@@ -34,9 +35,8 @@ const results = await agent.invoke(
 
 console.log(results.messages.at(-1)?.content);
 
-
-
-  res.json(results.messages.at(-1));
+  const lastMessage = results.messages.at(-1);
+  res.send(lastMessage?.content || "");
 });
 
 app.listen(PORT, () => {

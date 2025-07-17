@@ -6,7 +6,7 @@ import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { MemorySaver } from "@langchain/langgraph";
-import { MongoClient, ServerApiVersion } from 'mongodb';
+import { MongoClient, ServerApiVersion } from "mongodb";
 
 import data from "./data.js";
 
@@ -19,14 +19,16 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function testMongoConnection() {
   try {
     await client.connect();
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } catch (error) {
     console.error("MongoDB connection failed:", error);
   } finally {
@@ -44,28 +46,26 @@ const video1 = data[0];
 
 //retrieval tool
 const retrieveTool = tool(
-  
-  async ({ query }) => {console.log("Retrieval tool initialized")
+  async ({ query }) => {
+    console.log("Retrieval tool initialized");
     //(doc) => doc.metadata.id === id is a filter function to only retrieve the documents with the same id -> only works for memory vectore store, would be different for other databases
-    try{const retrievedDocs = await vectorStore.similaritySearch(
-      query,
-      3
-    );
-    console.log("Retrieved docs:", retrievedDocs);
+    try {
+      const retrievedDocs = await vectorStore.similaritySearch(query, 3);
+      console.log("Retrieved docs:", retrievedDocs);
 
-    const serializedDocs = retrievedDocs
-      .map((doc) => doc.pageContent)
-      .join("\n\n");
-    console.log(serializedDocs);
-    return serializedDocs;
-  } catch (error) {
-    console.error("Error in retrieval tool:", error);
-    return "Error in retrieval tool";
-  }
+      const serializedDocs = retrievedDocs
+        .map((doc) => doc.pageContent)
+        .join("\n\n");
+      console.log(serializedDocs);
+      return serializedDocs;
+    } catch (error) {
+      console.error("Error in retrieval tool:", error);
+      return "Error in retrieval tool";
+    }
   },
   {
     name: "retrieve",
-    description: "Retrieve the most relevant chunks from the content",
+    description: " Retrieves the most relevant passages or chunks from a book or document based on a user’s query. Use this tool when the user asks to find information, answers, or references within the content of a book.",
     schema: z.object({
       query: z.string(),
     }),
@@ -88,3 +88,7 @@ export const agent = createReactAgent({
   checkpointer,
 });
 
+//
+//
+//
+// curl -X POST http://localhost:3000/generate   -H "Content-Type: application/json"   -d '{"query": "Who is the goat of the unimaginable?","thread_id": "1"}'
