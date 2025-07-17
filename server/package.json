@@ -17,7 +17,10 @@
     "@langchain/langgraph": "^0.3.7",
     "@langchain/mongodb": "^0.1.0",
     "@langchain/openai": "^0.5.18",
+    "@types/express": "^5.0.3",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
+    "express": "^5.1.0",
     "langchain": "^0.3.29",
     "mongodb": "^6.17.0",
     "zod": "^3.25.76"

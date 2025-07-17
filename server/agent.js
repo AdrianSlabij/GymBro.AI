@@ -39,8 +39,8 @@ await testMongoConnection();
 
 //**step 1 indexing**: load, split, embed, store
 const video1 = data[0];
-await addBookToVectorStore(data[0]);
-await addBookToVectorStore(data[1]);
+// await addBookToVectorStore(data[0]);
+// await addBookToVectorStore(data[1]);
 
 //retrieval tool
 const retrieveTool = tool(
@@ -82,27 +82,9 @@ const llm = new ChatOpenAI({
 
 const checkpointer = new MemorySaver();
 
-const agent = createReactAgent({
+export const agent = createReactAgent({
   llm,
   tools: [retrieveTool],
   checkpointer,
 });
 
-//testing the agent
-const id = 1; //id of the first data json in data.js
-
-console.log("Q1: Who is known as the goat of the unimaginable?");
-const results = await agent.invoke(
-  {
-    messages: [
-      {
-        role: "user",
-        content:
-          "Based on the documents provided, Who is known as the goat of the unimaginable?",
-      },
-    ],
-  },
-  { configurable: { thread_id: 1} }
-);
-
-console.log(results.messages.at(-1)?.content);

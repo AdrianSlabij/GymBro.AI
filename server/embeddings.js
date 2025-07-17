@@ -33,7 +33,7 @@ export const addBookToVectorStore = async (documentData) => {
   const docs = [
     new Document({
       pageContent: content,
-      metadata: { source: source, id: id },
+      metadata: { source: source, id: String(id) },
     }),
   ];
 
