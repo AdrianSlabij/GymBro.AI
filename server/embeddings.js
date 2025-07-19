@@ -28,7 +28,7 @@ export const vectorStore = new MongoDBAtlasVectorSearch(embeddings, {
   embeddingKey: "embedding",
 });
 
-export const addBookToVectorStore = async (documentData) => {
+export const addDocumentToVectorStore = async (documentData) => {
   const { content, source, id } = documentData;
   const docs = [
     new Document({
